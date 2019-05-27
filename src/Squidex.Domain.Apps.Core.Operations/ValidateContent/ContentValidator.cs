@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,7 +70,7 @@ namespace Squidex.Domain.Apps.Core.ValidateContent
 
         private IValidator CreateSchemaValidator(bool isPartial)
         {
-            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>(schema.Fields.Count);
+            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>(schema.Fields.Count, StringComparer.InvariantCultureIgnoreCase);
 
             foreach (var field in schema.Fields)
             {
@@ -84,7 +85,7 @@ namespace Squidex.Domain.Apps.Core.ValidateContent
             var partitioning = partitionResolver(field.Partitioning);
 
             var fieldValidator = field.CreateValidator();
-            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>();
+            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>(StringComparer.InvariantCultureIgnoreCase);
 
             foreach (var partition in partitioning)
             {
