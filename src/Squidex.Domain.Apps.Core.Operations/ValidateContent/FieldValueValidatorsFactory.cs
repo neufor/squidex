@@ -37,7 +37,7 @@ namespace Squidex.Domain.Apps.Core.ValidateContent
                 yield return new CollectionValidator(field.Properties.IsRequired, field.Properties.MinItems, field.Properties.MaxItems);
             }
 
-            var nestedSchema = new Dictionary<string, (bool IsOptional, IValidator Validator)>(field.Fields.Count, StringComparer.InvariantCultureIgnoreCase);
+            var nestedSchema = new Dictionary<string, (bool IsOptional, IValidator Validator)>(field.Fields.Count);
 
             foreach (var nestedField in field.Fields)
             {

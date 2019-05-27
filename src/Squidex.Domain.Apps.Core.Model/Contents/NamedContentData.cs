@@ -13,12 +13,12 @@ namespace Squidex.Domain.Apps.Core.Contents
     public sealed class NamedContentData : ContentData<string>, IEquatable<NamedContentData>
     {
         public NamedContentData()
-            : base(StringComparer.InvariantCultureIgnoreCase)
+            : base(StringComparer.Ordinal)
         {
         }
 
         public NamedContentData(int capacity)
-            : base(capacity, StringComparer.InvariantCultureIgnoreCase)
+            : base(capacity, StringComparer.Ordinal)
         {
         }
 

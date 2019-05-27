@@ -70,7 +70,7 @@ namespace Squidex.Domain.Apps.Core.ValidateContent
 
         private IValidator CreateSchemaValidator(bool isPartial)
         {
-            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>(schema.Fields.Count, StringComparer.InvariantCultureIgnoreCase);
+            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>(schema.Fields.Count);
 
             foreach (var field in schema.Fields)
             {
@@ -85,7 +85,7 @@ namespace Squidex.Domain.Apps.Core.ValidateContent
             var partitioning = partitionResolver(field.Partitioning);
 
             var fieldValidator = field.CreateValidator();
-            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>(StringComparer.InvariantCultureIgnoreCase);
+            var fieldsValidators = new Dictionary<string, (bool IsOptional, IValidator Validator)>();
 
             foreach (var partition in partitioning)
             {
