@@ -87,7 +87,7 @@ namespace Squidex.Domain.Apps.Core.ValidateContent
         {
             if (value.Type == JsonValueType.String)
             {
-                var parseResult = InstantPattern.General.Parse(value.ToString());
+                var parseResult = InstantPattern.ExtendedIso.Parse(value.ToString());
 
                 if (!parseResult.Success)
                 {

@@ -544,7 +544,7 @@ namespace Squidex.Areas.Api.Controllers.Contents
 
             if (!string.IsNullOrWhiteSpace(dueTime))
             {
-                var parseResult = InstantPattern.General.Parse(dueTime);
+                var parseResult = InstantPattern.ExtendedIso.Parse(dueTime);
 
                 if (parseResult.Success)
                 {

@@ -41,7 +41,7 @@ namespace Squidex.Domain.Apps.Entities.Assets.MongoDb
         [Fact]
         public void Should_make_query_with_lastModified()
         {
-            var i = F(FilterBuilder.Eq("lastModified", InstantPattern.General.Parse("1988-01-19T12:00:00Z").Value));
+            var i = F(FilterBuilder.Eq("lastModified", InstantPattern.ExtendedIso.Parse("1988-01-19T12:00:00Z").Value));
             var o = C("{ 'LastModified' : ISODate('1988-01-19T12:00:00Z') }");
 
             Assert.Equal(o, i);
@@ -59,7 +59,7 @@ namespace Squidex.Domain.Apps.Entities.Assets.MongoDb
         [Fact]
         public void Should_make_query_with_created()
         {
-            var i = F(FilterBuilder.Eq("created", InstantPattern.General.Parse("1988-01-19T12:00:00Z").Value));
+            var i = F(FilterBuilder.Eq("created", InstantPattern.ExtendedIso.Parse("1988-01-19T12:00:00Z").Value));
             var o = C("{ 'Created' : ISODate('1988-01-19T12:00:00Z') }");
 
             Assert.Equal(o, i);
