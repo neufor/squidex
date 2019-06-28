@@ -59,39 +59,6 @@ const routes: Routes = [
                 ]
             },
             {
-                path: 'plans',
-                component: PlansPageComponent,
-                children: [
-                    {
-                        path: 'history',
-                        component: HistoryComponent,
-                        data: {
-                            channel: 'settings.plan'
-                        }
-                    }
-                ]
-            },
-            {
-                path: 'patterns',
-                component: PatternsPageComponent,
-                children: [
-                    {
-                        path: 'history',
-                        component: HistoryComponent,
-                        data: {
-                            channel: 'settings.patterns'
-                        }
-                    },
-                    {
-                        path: 'help',
-                        component: HelpComponent,
-                        data: {
-                            helpPage: '05-integrated/patterns'
-                        }
-                    }
-                ]
-            },
-            {
                 path: 'clients',
                 component: ClientsPageComponent,
                 children: [
@@ -132,26 +99,6 @@ const routes: Routes = [
                 ]
             },
             {
-                path: 'roles',
-                component: RolesPageComponent,
-                children: [
-                    {
-                        path: 'history',
-                        component: HistoryComponent,
-                        data: {
-                            channel: 'settings.roles'
-                        }
-                    },
-                    {
-                        path: 'help',
-                        component: HelpComponent,
-                        data: {
-                            helpPage: '05-integrated/roles'
-                        }
-                    }
-                ]
-            },
-            {
                 path: 'languages',
                 component: LanguagesPageComponent,
                 children: [
@@ -167,6 +114,59 @@ const routes: Routes = [
                         component: HelpComponent,
                         data: {
                             helpPage: '05-integrated/languages'
+                        }
+                    }
+                ]
+            },
+            {
+                path: 'patterns',
+                component: PatternsPageComponent,
+                children: [
+                    {
+                        path: 'history',
+                        component: HistoryComponent,
+                        data: {
+                            channel: 'settings.patterns'
+                        }
+                    },
+                    {
+                        path: 'help',
+                        component: HelpComponent,
+                        data: {
+                            helpPage: '05-integrated/patterns'
+                        }
+                    }
+                ]
+            },
+            {
+                path: 'plans',
+                component: PlansPageComponent,
+                children: [
+                    {
+                        path: 'history',
+                        component: HistoryComponent,
+                        data: {
+                            channel: 'settings.plan'
+                        }
+                    }
+                ]
+            },
+            {
+                path: 'roles',
+                component: RolesPageComponent,
+                children: [
+                    {
+                        path: 'history',
+                        component: HistoryComponent,
+                        data: {
+                            channel: 'settings.roles'
+                        }
+                    },
+                    {
+                        path: 'help',
+                        component: HelpComponent,
+                        data: {
+                            helpPage: '05-integrated/roles'
                         }
                     }
                 ]

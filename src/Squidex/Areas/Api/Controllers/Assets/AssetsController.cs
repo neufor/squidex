@@ -105,14 +105,14 @@ namespace Squidex.Areas.Api.Controllers.Assets
 
             var assets = await assetQuery.QueryAsync(context, Q.Empty.WithODataQuery(Request.QueryString.ToString()).WithIds(ids));
 
-            var response = AssetsDto.FromAssets(assets);
+            var response = AssetsDto.FromAssets(assets, this, app);
 
             if (controllerOptions.Value.EnableSurrogateKeys && response.Items.Length <= controllerOptions.Value.MaxItemsForSurrogateKeys)
             {
-                Response.Headers["Surrogate-Key"] = response.Items.ToSurrogateKeys();
+                Response.Headers["Surrogate-Key"] = response.ToSurrogateKeys();
             }
 
-            Response.Headers[HeaderNames.ETag] = response.Items.ToManyEtag(response.Total);
+            Response.Headers[HeaderNames.ETag] = response.ToEtag();
 
             return Ok(response);
         }
@@ -133,23 +133,21 @@ namespace Squidex.Areas.Api.Controllers.Assets
         [ApiCosts(1)]
         public async Task<IActionResult> GetAsset(string app, Guid id)
         {
-            var context = Context();
+            var asset = await assetQuery.FindAssetAsync(id);
 
-            var entity = await assetQuery.FindAssetAsync(context, id);
-
-            if (entity == null)
+            if (asset == null)
             {
                 return NotFound();
             }
 
-            var response = AssetDto.FromAsset(entity);
+            var response = AssetDto.FromAsset(asset, this, app);
 
             if (controllerOptions.Value.EnableSurrogateKeys)
             {
-                Response.Headers["Surrogate-Key"] = entity.Id.ToString();
+                Response.Headers["Surrogate-Key"] = asset.Id.ToString();
             }
 
-            Response.Headers[HeaderNames.ETag] = entity.Version.ToString();
+            Response.Headers[HeaderNames.ETag] = asset.Version.ToString();
 
             return Ok(response);
         }
@@ -169,8 +167,7 @@ namespace Squidex.Areas.Api.Controllers.Assets
         /// </remarks>
         [HttpPost]
         [Route("apps/{app}/assets/")]
-        [ProducesResponseType(typeof(AssetCreatedDto), 201)]
-        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(AssetDto), 200)]
         [AssetRequestSizeLimit]
         [ApiPermission(Permissions.AppAssetsCreate)]
         [ApiCosts(1)]
@@ -179,12 +176,13 @@ namespace Squidex.Areas.Api.Controllers.Assets
             var assetFile = await CheckAssetFileAsync(file);
 
             var command = new CreateAsset { File = assetFile };
+
             var context = await CommandBus.PublishAsync(command);
 
             var result = context.Result<AssetCreatedResult>();
-            var response = AssetCreatedDto.FromCommand(command, result);
+            var response = AssetDto.FromAsset(result.Asset, this, app, result.IsDuplicate);
 
-            return StatusCode(201, response);
+            return CreatedAtAction(nameof(GetAsset), new { app, id = response.Id }, response);
         }
 
         /// <summary>
@@ -194,7 +192,7 @@ namespace Squidex.Areas.Api.Controllers.Assets
         /// <param name="id">The id of the asset.</param>
         /// <param name="file">The file to upload.</param>
         /// <returns>
-        /// 201 => Asset updated.
+        /// 200 => Asset updated.
         /// 404 => Asset or app not found.
         /// 400 => Asset exceeds the maximum size.
         /// </returns>
@@ -203,8 +201,7 @@ namespace Squidex.Areas.Api.Controllers.Assets
         /// </remarks>
         [HttpPut]
         [Route("apps/{app}/assets/{id}/content/")]
-        [ProducesResponseType(typeof(AssetReplacedDto), 201)]
-        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(AssetDto), 200)]
         [ApiPermission(Permissions.AppAssetsUpdate)]
         [ApiCosts(1)]
         public async Task<IActionResult> PutAssetContent(string app, Guid id, [SwaggerIgnore] List<IFormFile> file)
@@ -212,12 +209,10 @@ namespace Squidex.Areas.Api.Controllers.Assets
             var assetFile = await CheckAssetFileAsync(file);
 
             var command = new UpdateAsset { File = assetFile, AssetId = id };
-            var context = await CommandBus.PublishAsync(command);
 
-            var result = context.Result<AssetSavedResult>();
-            var response = AssetReplacedDto.FromCommand(command, result);
+            var response = await InvokeCommandAsync(app, command);
 
-            return StatusCode(201, response);
+            return Ok(response);
         }
 
         /// <summary>
@@ -227,21 +222,23 @@ namespace Squidex.Areas.Api.Controllers.Assets
         /// <param name="id">The id of the asset.</param>
         /// <param name="request">The asset object that needs to updated.</param>
         /// <returns>
-        /// 204 => Asset updated.
+        /// 200 => Asset updated.
         /// 400 => Asset name not valid.
         /// 404 => Asset or app not found.
         /// </returns>
         [HttpPut]
         [Route("apps/{app}/assets/{id}/")]
-        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(AssetDto), 200)]
         [AssetRequestSizeLimit]
         [ApiPermission(Permissions.AppAssetsUpdate)]
         [ApiCosts(1)]
         public async Task<IActionResult> PutAsset(string app, Guid id, [FromBody] AnnotateAssetDto request)
         {
-            await CommandBus.PublishAsync(request.ToCommand(id));
+            var command = request.ToCommand(id);
 
-            return NoContent();
+            var response = await InvokeCommandAsync(app, command);
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -250,7 +247,7 @@ namespace Squidex.Areas.Api.Controllers.Assets
         /// <param name="app">The name of the app.</param>
         /// <param name="id">The id of the asset to delete.</param>
         /// <returns>
-        /// 204 => Asset has been deleted.
+        /// 204 => Asset deleted.
         /// 404 => Asset or app not found.
         /// </returns>
         [HttpDelete]
@@ -262,6 +259,16 @@ namespace Squidex.Areas.Api.Controllers.Assets
             await CommandBus.PublishAsync(new DeleteAsset { AssetId = id });
 
             return NoContent();
+        }
+
+        private async Task<AssetDto> InvokeCommandAsync(string app, ICommand command)
+        {
+            var context = await CommandBus.PublishAsync(command);
+
+            var result = context.Result<IEnrichedAssetEntity>();
+            var response = AssetDto.FromAsset(result, this, app);
+
+            return response;
         }
 
         private async Task<AssetFile> CheckAssetFileAsync(IReadOnlyList<IFormFile> file)
