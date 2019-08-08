@@ -6,7 +6,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { forkJoin, Observable, of } from 'rxjs';
+import { empty, forkJoin, Observable, of } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 
 import {
@@ -122,6 +122,14 @@ export abstract class ContentsStateBase extends State<Snapshot> {
         }
 
         return this.loadInternal(isReload);
+    }
+
+    public loadIfNotLoaded(): Observable<any> {
+        if (this.snapshot.isLoaded) {
+            return empty();
+        }
+
+        return this.loadInternal(false);
     }
 
     private loadInternal(isReload = false) {
@@ -355,5 +363,5 @@ function buildQueries(statuses: StatusInfo[] | undefined): ContentQuery[] {
 }
 
 function buildQuery(s: StatusInfo) {
-    return ({ name: s.status, color: s.color, filter: `$filter=status eq '${s}'` });
+    return ({ name: s.status, color: s.color, filter: `$filter=status eq '${s.status}'` });
 }

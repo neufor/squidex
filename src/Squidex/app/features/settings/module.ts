@@ -16,7 +16,6 @@ import {
 } from '@app/shared';
 
 import {
-    BackupDownloadUrlPipe,
     BackupDurationPipe,
     BackupsPageComponent,
     ClientComponent,
@@ -30,7 +29,11 @@ import {
     PlansPageComponent,
     RoleComponent,
     RolesPageComponent,
-    SettingsAreaComponent
+    SettingsAreaComponent,
+    WorkflowComponent,
+    WorkflowsPageComponent,
+    WorkflowStepComponent,
+    WorkflowTransitionComponent
 } from './declarations';
 
 const routes: Routes = [
@@ -170,6 +173,19 @@ const routes: Routes = [
                         }
                     }
                 ]
+            },
+            {
+                path: 'workflows',
+                component: WorkflowsPageComponent,
+                children: [
+                    {
+                        path: 'help',
+                        component: HelpComponent,
+                        data: {
+                            helpPage: '05-integrated/workflows'
+                        }
+                    }
+                ]
             }
         ]
     }
@@ -182,7 +198,6 @@ const routes: Routes = [
         RouterModule.forChild(routes)
     ],
     declarations: [
-        BackupDownloadUrlPipe,
         BackupDurationPipe,
         BackupsPageComponent,
         ClientComponent,
@@ -196,7 +211,11 @@ const routes: Routes = [
         PlansPageComponent,
         RoleComponent,
         RolesPageComponent,
-        SettingsAreaComponent
+        SettingsAreaComponent,
+        WorkflowComponent,
+        WorkflowsPageComponent,
+        WorkflowTransitionComponent,
+        WorkflowStepComponent
     ]
 })
-export class SqxFeatureSettingsModule { }
+export class SqxFeatureSettingsModule {}

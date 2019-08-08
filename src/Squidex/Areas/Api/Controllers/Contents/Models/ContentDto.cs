@@ -19,7 +19,7 @@ using Squidex.Web;
 
 namespace Squidex.Areas.Api.Controllers.Contents.Models
 {
-    public sealed class ContentDto : Resource, IGenerateETag
+    public sealed class ContentDto : Resource
     {
         /// <summary>
         /// The if of the content item.
@@ -48,6 +48,11 @@ namespace Squidex.Areas.Api.Controllers.Contents.Models
         /// The pending changes of the content item.
         /// </summary>
         public object DataDraft { get; set; }
+
+        /// <summary>
+        /// The reference data for the frontend UI.
+        /// </summary>
+        public NamedContentData ReferenceData { get; set; }
 
         /// <summary>
         /// Indicates if the draft data is pending.
@@ -84,11 +89,11 @@ namespace Squidex.Areas.Api.Controllers.Contents.Models
         /// </summary>
         public long Version { get; set; }
 
-        public static ContentDto FromContent(QueryContext context, IEnrichedContentEntity content, ApiController controller)
+        public static ContentDto FromContent(Context context, IEnrichedContentEntity content, ApiController controller)
         {
             var response = SimpleMapper.Map(content, new ContentDto());
 
-            if (context?.Flatten == true)
+            if (context.IsFlatten())
             {
                 response.Data = content.Data?.ToFlatten();
                 response.DataDraft = content.DataDraft?.ToFlatten();
@@ -122,12 +127,12 @@ namespace Squidex.Areas.Api.Controllers.Contents.Models
 
             if (IsPending)
             {
-                if (controller.HasPermission(Permissions.AppContentsDiscard, app, schema))
+                if (controller.HasPermission(Permissions.AppContentsDraftDiscard, app, schema))
                 {
                     AddPutLink("draft/discard", controller.Url<ContentsController>(x => nameof(x.DiscardDraft), values));
                 }
 
-                if (controller.HasPermission(Helper.StatusPermission(app, schema, Status.Published)))
+                if (controller.HasPermission(Permissions.AppContentsDraftPublish, app, schema))
                 {
                     AddPutLink("draft/publish", controller.Url<ContentsController>(x => nameof(x.PutContentStatus), values));
                 }
@@ -146,19 +151,19 @@ namespace Squidex.Areas.Api.Controllers.Contents.Models
                 }
 
                 AddPatchLink("patch", controller.Url<ContentsController>(x => nameof(x.PatchContent), values));
+
+                if (content.Nexts != null)
+                {
+                    foreach (var next in content.Nexts)
+                    {
+                        AddPutLink($"status/{next.Status}", controller.Url<ContentsController>(x => nameof(x.PutContentStatus), values), next.Color);
+                    }
+                }
             }
 
             if (controller.HasPermission(Permissions.AppContentsDelete, app, schema))
             {
                 AddDeleteLink("delete", controller.Url<ContentsController>(x => nameof(x.DeleteContent), values));
-            }
-
-            foreach (var next in content.Nexts)
-            {
-                if (controller.HasPermission(Helper.StatusPermission(app, schema, next.Status)))
-                {
-                    AddPutLink($"status/{next.Status}", controller.Url<ContentsController>(x => nameof(x.PutContentStatus), values), next.Color);
-                }
             }
 
             return this;

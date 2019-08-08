@@ -28,12 +28,13 @@ using Squidex.Domain.Apps.Entities.Apps.Invitation;
 using Squidex.Domain.Apps.Entities.Apps.Templates;
 using Squidex.Domain.Apps.Entities.Assets;
 using Squidex.Domain.Apps.Entities.Assets.Commands;
+using Squidex.Domain.Apps.Entities.Assets.Queries;
 using Squidex.Domain.Apps.Entities.Backup;
 using Squidex.Domain.Apps.Entities.Comments;
 using Squidex.Domain.Apps.Entities.Comments.Commands;
 using Squidex.Domain.Apps.Entities.Contents;
-using Squidex.Domain.Apps.Entities.Contents.Edm;
 using Squidex.Domain.Apps.Entities.Contents.GraphQL;
+using Squidex.Domain.Apps.Entities.Contents.Queries;
 using Squidex.Domain.Apps.Entities.Contents.Text;
 using Squidex.Domain.Apps.Entities.History;
 using Squidex.Domain.Apps.Entities.History.Notifications;
@@ -99,11 +100,20 @@ namespace Squidex.Config.Domain
             services.AddSingletonAs<AssetEnricher>()
                 .As<IAssetEnricher>();
 
+            services.AddSingletonAs<ContentEnricher>()
+                .As<IContentEnricher>();
+
+            services.AddSingletonAs<AssetQueryParser>()
+                .AsSelf();
+
             services.AddSingletonAs<AssetQueryService>()
                 .As<IAssetQueryService>();
 
-            services.AddSingletonAs<ContentEnricher>()
-                .As<IContentEnricher>();
+            services.AddSingletonAs(c => new Lazy<IContentQueryService>(() => c.GetRequiredService<IContentQueryService>()))
+                .AsSelf();
+
+            services.AddSingletonAs<ContentQueryParser>()
+                .AsSelf();
 
             services.AddSingletonAs<ContentQueryService>()
                 .As<IContentQueryService>();
@@ -120,13 +130,13 @@ namespace Squidex.Config.Domain
             services.AddSingletonAs<SchemaHistoryEventsCreator>()
                 .As<IHistoryEventsCreator>();
 
-            services.AddSingletonAs<DefaultContentWorkflow>()
+            services.AddSingletonAs<DynamicContentWorkflow>()
                 .AsOptional<IContentWorkflow>();
 
-            services.AddSingletonAs<RolePermissionsProvider>()
-                .AsSelf();
+            services.AddSingletonAs<DefaultWorkflowsValidator>()
+                .AsOptional<IWorkflowsValidator>();
 
-            services.AddSingletonAs<EdmModelBuilder>()
+            services.AddSingletonAs<RolePermissionsProvider>()
                 .AsSelf();
 
             services.AddSingletonAs<GrainTagService>()
@@ -219,6 +229,9 @@ namespace Squidex.Config.Domain
                 .As<ICommandMiddleware>();
 
             services.AddSingletonAs<EnrichWithSchemaIdCommandMiddleware>()
+                .As<ICommandMiddleware>();
+
+            services.AddSingletonAs<CustomCommandMiddlewareRunner>()
                 .As<ICommandMiddleware>();
 
             services.AddSingletonAs<InviteUserCommandMiddleware>()

@@ -37,6 +37,7 @@ import {
     ReferencesUIComponent,
     ReferencesValidationComponent,
     SchemaEditFormComponent,
+    SchemaExportFormComponent,
     SchemaFormComponent,
     SchemaPageComponent,
     SchemaPreviewUrlsFormComponent,
@@ -101,6 +102,7 @@ const routes: Routes = [
         ReferencesUIComponent,
         ReferencesValidationComponent,
         SchemaEditFormComponent,
+        SchemaExportFormComponent,
         SchemaFormComponent,
         SchemaPageComponent,
         SchemaPreviewUrlsFormComponent,
@@ -112,4 +114,4 @@ const routes: Routes = [
         TagsValidationComponent
     ]
 })
-export class SqxFeatureSchemasModule { }
+export class SqxFeatureSchemasModule {}

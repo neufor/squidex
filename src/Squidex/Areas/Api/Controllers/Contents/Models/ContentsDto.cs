@@ -8,7 +8,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Squidex.Domain.Apps.Core.Contents;
 using Squidex.Domain.Apps.Entities;
 using Squidex.Domain.Apps.Entities.Contents;
 using Squidex.Domain.Apps.Entities.Schemas;
@@ -37,18 +36,8 @@ namespace Squidex.Areas.Api.Controllers.Contents.Models
         [Required]
         public StatusInfoDto[] Statuses { get; set; }
 
-        public string ToEtag()
-        {
-            return Items.ToManyEtag(Total);
-        }
-
-        public string ToSurrogateKeys()
-        {
-            return Items.ToSurrogateKeys();
-        }
-
         public static async Task<ContentsDto> FromContentsAsync(IResultList<IEnrichedContentEntity> contents,
-            QueryContext context, ApiController controller, ISchemaEntity schema, IContentWorkflow contentWorkflow)
+            Context context, ApiController controller, ISchemaEntity schema, IContentWorkflow contentWorkflow)
         {
             var result = new ContentsDto
             {
@@ -80,10 +69,7 @@ namespace Squidex.Areas.Api.Controllers.Contents.Models
                 {
                     AddPostLink("create", controller.Url<ContentsController>(x => nameof(x.PostContent), values));
 
-                    if (controller.HasPermission(Helper.StatusPermission(app, schema, Status.Published)))
-                    {
-                        AddPostLink("create/publish", controller.Url<ContentsController>(x => nameof(x.PostContent), values) + "?publish=true");
-                    }
+                    AddPostLink("create/publish", controller.Url<ContentsController>(x => nameof(x.PostContent), values) + "?publish=true");
                 }
             }
 

@@ -20,6 +20,7 @@ import {
     Resource,
     ResourceLinks,
     StringHelper,
+    Types,
     Version,
     Versioned
 } from '@app/framework';
@@ -81,6 +82,7 @@ export class SchemaDto {
 export class SchemaDetailsDto extends SchemaDto {
     public listFields: RootFieldDto[];
     public listFieldsEditable: RootFieldDto[];
+    public referenceFields: RootFieldDto[];
 
     constructor(links: ResourceLinks, id: string, name: string, category: string,
         properties: SchemaPropertiesDto,
@@ -98,19 +100,69 @@ export class SchemaDetailsDto extends SchemaDto {
         super(links, id, name, category, properties, isSingleton, isPublished, created, createdBy, lastModified, lastModifiedBy, version);
 
         if (fields) {
-            let listFields = this.fields.filter(x => x.properties.isListField && x.properties.isContentField);
+            this.listFields = this.fields.filter(x => x.properties.isListField && x.properties.isContentField);
 
-            if (listFields.length === 0 && this.fields.length > 0) {
-                listFields = [this.fields[0]];
+            if (this.listFields.length === 0 && this.fields.length > 0) {
+                this.listFields = [this.fields[0]];
             }
 
-            if (listFields.length === 0) {
-                listFields = NONE_FIELDS;
+            if (this.listFields.length === 0) {
+                this.listFields = NONE_FIELDS;
             }
 
-            this.listFields = listFields;
-            this.listFieldsEditable = listFields.filter(x => x.isInlineEditable);
+            this.listFieldsEditable = this.listFields.filter(x => x.isInlineEditable);
+
+            this.referenceFields = this.fields.filter(x => x.properties.isReferenceField && x.properties.isContentField);
+
+            if (this.referenceFields.length === 0) {
+                this.referenceFields = this.listFields;
+            }
         }
+    }
+
+    public export(): any {
+        const cleanup = (source: any, ...exclude: string[]): any => {
+            const clone = {};
+
+            for (const key in source) {
+                if (source.hasOwnProperty(key) && exclude.indexOf(key) < 0) {
+                    const value = source[key];
+
+                    if (value) {
+                        clone[key] = value;
+                    }
+                }
+            }
+
+            return clone;
+        };
+
+        const result: any = {
+            fields: this.fields.map(field => {
+                const copy = cleanup(field, 'fieldId');
+
+                copy.properties = cleanup(field.properties);
+
+                if (Types.isArray(copy.nested)) {
+                    if (copy.nested.length === 0) {
+                        delete copy['nested'];
+                    } else {
+                        copy.nested = field.nested.map(nestedField => {
+                            const nestedCopy = cleanup(nestedField, 'fieldId', 'parentId');
+
+                            nestedCopy.properties = cleanup(nestedField.properties);
+
+                            return nestedCopy;
+                        });
+                    }
+                }
+
+                return copy;
+            }),
+            properties: cleanup(this.properties)
+        };
+
+        return result;
     }
 }
 

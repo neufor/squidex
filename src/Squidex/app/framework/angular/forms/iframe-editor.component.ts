@@ -5,10 +5,10 @@
  * Copyright (c) Squidex UG (haftungsbeschränkt). All rights reserved.
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, forwardRef, Input, OnChanges, OnInit, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, forwardRef, Input, OnChanges, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
-import { ExternalControlComponent, Types } from '@app/framework/internal';
+import { StatefulControlComponent, Types } from '@app/framework/internal';
 
 export const SQX_IFRAME_EDITOR_CONTROL_VALUE_ACCESSOR: any = {
     provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => IFrameEditorComponent), multi: true
@@ -21,7 +21,7 @@ export const SQX_IFRAME_EDITOR_CONTROL_VALUE_ACCESSOR: any = {
     providers: [SQX_IFRAME_EDITOR_CONTROL_VALUE_ACCESSOR],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IFrameEditorComponent extends ExternalControlComponent<any> implements OnChanges, OnInit {
+export class IFrameEditorComponent extends StatefulControlComponent<any, any> implements OnChanges, AfterViewInit {
     private value: any;
     private isDisabled = false;
     private isInitialized = false;
@@ -41,20 +41,28 @@ export class IFrameEditorComponent extends ExternalControlComponent<any> impleme
     constructor(changeDetector: ChangeDetectorRef,
         private readonly renderer: Renderer2
     ) {
-        super(changeDetector);
+        super(changeDetector, {});
     }
 
     public ngOnChanges(changes: SimpleChanges) {
-        if (changes['url']) {
-            this.iframe.nativeElement.src = this.url;
-        }
+        if (this.iframe) {
+            if (changes['url']) {
+                this.setupUrl();
+            }
 
-        if (changes['formValue'] && this.formValue) {
-            this.sendFormValue();
+            if (changes['formValue'] && this.formValue) {
+                this.sendFormValue();
+            }
         }
     }
 
-    public ngOnInit(): void {
+    private setupUrl() {
+        this.iframe.nativeElement.src = this.url;
+    }
+
+    public ngAfterViewInit() {
+        this.setupUrl();
+
         this.own(
             this.renderer.listen('window', 'message', (event: MessageEvent) => {
                 if (event.source === this.iframe.nativeElement.contentWindow) {
@@ -111,6 +119,10 @@ export class IFrameEditorComponent extends ExternalControlComponent<any> impleme
     }
 
     private sendMessage(type: string, payload: any) {
+        if (!this.iframe) {
+            return;
+        }
+
         const iframe = this.iframe.nativeElement;
 
         if (this.isInitialized && iframe.contentWindow && Types.isFunction(iframe.contentWindow.postMessage)) {

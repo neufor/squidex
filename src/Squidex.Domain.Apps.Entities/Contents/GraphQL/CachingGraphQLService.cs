@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Squidex.Domain.Apps.Entities.Apps;
 using Squidex.Domain.Apps.Entities.Assets;
 using Squidex.Infrastructure;
@@ -29,7 +30,7 @@ namespace Squidex.Domain.Apps.Entities.Contents.GraphQL
             this.resolver = resolver;
         }
 
-        public async Task<(bool HasError, object Response)> QueryAsync(QueryContext context, params GraphQLQuery[] queries)
+        public async Task<(bool HasError, object Response)> QueryAsync(Context context, params GraphQLQuery[] queries)
         {
             Guard.NotNull(context, nameof(context));
             Guard.NotNull(queries, nameof(queries));
@@ -40,10 +41,10 @@ namespace Squidex.Domain.Apps.Entities.Contents.GraphQL
 
             var result = await Task.WhenAll(queries.Select(q => QueryInternalAsync(model, ctx, q)));
 
-            return (result.Any(x => x.HasError), result.ToArray(x => x.Response));
+            return (result.Any(x => x.HasError), result.Map(x => x.Response));
         }
 
-        public async Task<(bool HasError, object Response)> QueryAsync(QueryContext context, GraphQLQuery query)
+        public async Task<(bool HasError, object Response)> QueryAsync(Context context, GraphQLQuery query)
         {
             Guard.NotNull(context, nameof(context));
             Guard.NotNull(query, nameof(query));
@@ -88,10 +89,20 @@ namespace Squidex.Domain.Apps.Entities.Contents.GraphQL
 
                 return new GraphQLModel(app,
                     allSchemas,
-                    resolver.Resolve<IContentQueryService>().DefaultPageSizeGraphQl,
-                    resolver.Resolve<IAssetQueryService>().DefaultPageSizeGraphQl,
+                    GetPageSizeForContents(),
+                    GetPageSizeForAssets(),
                     resolver.Resolve<IGraphQLUrlGenerator>());
             });
+        }
+
+        private int GetPageSizeForContents()
+        {
+            return resolver.Resolve<IOptions<ContentOptions>>().Value.DefaultPageSizeGraphQl;
+        }
+
+        private int GetPageSizeForAssets()
+        {
+            return resolver.Resolve<IOptions<AssetOptions>>().Value.DefaultPageSizeGraphQl;
         }
 
         private static object CreateCacheKey(Guid appId, string etag)

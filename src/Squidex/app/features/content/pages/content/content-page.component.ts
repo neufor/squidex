@@ -78,6 +78,8 @@ export class ContentPageComponent extends ResourceOwner implements CanComponentD
     }
 
     public ngOnInit() {
+        this.contentsState.loadIfNotLoaded();
+
         this.own(
             this.languagesState.languages
                 .subscribe(languages => {
@@ -113,7 +115,7 @@ export class ContentPageComponent extends ResourceOwner implements CanComponentD
     }
 
     public canDeactivate(): Observable<boolean> {
-        if (!this.contentForm.form.dirty || !this.content) {
+        if (!this.contentForm.form.dirty) {
             return of(true);
         } else {
             return this.dialogs.confirm('Unsaved changes', 'You have unsaved changes, do you want to close the current content view and discard your changes?');
@@ -149,7 +151,7 @@ export class ContentPageComponent extends ResourceOwner implements CanComponentD
                             this.contentForm.submitFailed(error);
                         });
                 } else {
-                    if (this.content && !this.content.canUpdate) {
+                    if (this.content && !this.content.canUpdateAny) {
                         return;
                     }
 
@@ -167,6 +169,8 @@ export class ContentPageComponent extends ResourceOwner implements CanComponentD
 
                 this.contentsState.create(value, publish)
                     .subscribe(() => {
+                        this.contentForm.submitCompleted({ noReset: true });
+
                         this.back();
                     }, error => {
                         this.contentForm.submitFailed(error);
@@ -183,7 +187,7 @@ export class ContentPageComponent extends ResourceOwner implements CanComponentD
 
     private loadContent(data: any) {
         this.contentForm.loadContent(data);
-        this.contentForm.setEnabled(!this.content || this.content.canUpdate);
+        this.contentForm.setEnabled(!this.content || this.content.canUpdateAny);
     }
 
     public discardChanges() {

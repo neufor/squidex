@@ -19,6 +19,8 @@ import {
     value$
 } from '@app/framework';
 
+import { ContentDto, ContentReferencesValue } from '../services/contents.service';
+import { LanguageDto } from '../services/languages.service';
 import { AppLanguageDto } from './../services/app-languages.service';
 import { FieldDto, RootFieldDto, SchemaDetailsDto } from './../services/schemas.service';
 import {
@@ -37,6 +39,13 @@ import {
     UIFieldPropertiesDto
 } from './../services/schemas.types';
 
+export class HtmlValue {
+    constructor(
+        public readonly html: string
+    ) {
+    }
+}
+
 export class SaveQueryForm extends Form<FormGroup, any> {
     constructor(formBuilder: FormBuilder) {
         super(formBuilder.group({
@@ -49,21 +58,73 @@ export class SaveQueryForm extends Form<FormGroup, any> {
     }
 }
 
-export class FieldFormatter implements FieldPropertiesVisitor<string> {
+export type FieldValue = string | HtmlValue;
+
+export function getContentValue(content: ContentDto, language: LanguageDto, field: RootFieldDto, allowHtml = true): { value: any, formatted: FieldValue } {
+    if (content.referenceData) {
+        const reference = content.referenceData[field.name];
+
+        if (reference) {
+            let fieldValue: ContentReferencesValue;
+
+            if (field.isLocalizable) {
+                fieldValue = reference[language.iso2Code];
+            } else {
+                fieldValue = reference[fieldInvariant];
+            }
+
+            let value: string | undefined =
+                fieldValue ?
+                fieldValue[language.iso2Code] :
+                undefined;
+
+            value = value || '- No Value -';
+
+            return { value, formatted: value };
+        }
+    }
+
+    const contentField = content.dataDraft[field.name];
+
+    if (contentField) {
+        let value: any;
+
+        if (field.isLocalizable) {
+            value = contentField[language.iso2Code];
+        } else {
+            value = contentField[fieldInvariant];
+        }
+
+        let formatted: any;
+
+        if (Types.isUndefined(value)) {
+            formatted = value || '';
+        } else {
+            formatted = FieldFormatter.format(field, value, allowHtml);
+        }
+
+        return { value, formatted };
+    }
+
+    return { value: undefined, formatted: '' };
+}
+
+export class FieldFormatter implements FieldPropertiesVisitor<FieldValue> {
     constructor(
-        private readonly value: any
+        private readonly value: any,
+        private readonly allowHtml: boolean
     ) {
     }
 
-    public static format(field: FieldDto, value: any) {
+    public static format(field: FieldDto, value: any, allowHtml = true) {
         if (value === null || value === undefined) {
             return '';
         }
 
-        return field.properties.accept(new FieldFormatter(value));
+        return field.properties.accept(new FieldFormatter(value, allowHtml));
     }
 
-    public visitDateTime(properties: DateTimeFieldPropertiesDto): string {
+    public visitDateTime(properties: DateTimeFieldPropertiesDto): FieldValue {
         try {
             const parsed = DateTime.parseISO_UTC(this.value);
 
@@ -77,7 +138,7 @@ export class FieldFormatter implements FieldPropertiesVisitor<string> {
         }
     }
 
-    public visitArray(properties: ArrayFieldPropertiesDto): string {
+    public visitArray(_: ArrayFieldPropertiesDto): string {
         if (this.value.length) {
             return `${this.value.length} Item(s)`;
         } else {
@@ -85,7 +146,7 @@ export class FieldFormatter implements FieldPropertiesVisitor<string> {
         }
     }
 
-    public visitAssets(properties: AssetsFieldPropertiesDto): string {
+    public visitAssets(_: AssetsFieldPropertiesDto): string {
         if (this.value.length) {
             return `${this.value.length} Asset(s)`;
         } else {
@@ -93,7 +154,7 @@ export class FieldFormatter implements FieldPropertiesVisitor<string> {
         }
     }
 
-    public visitReferences(properties: ReferencesFieldPropertiesDto): string {
+    public visitReferences(_: ReferencesFieldPropertiesDto): string {
         if (this.value.length) {
             return `${this.value.length} Reference(s)`;
         } else {
@@ -101,7 +162,7 @@ export class FieldFormatter implements FieldPropertiesVisitor<string> {
         }
     }
 
-    public visitTags(properties: TagsFieldPropertiesDto): string {
+    public visitTags(_: TagsFieldPropertiesDto): string {
         if (this.value.length) {
             return this.value.join(', ');
         } else {
@@ -109,28 +170,41 @@ export class FieldFormatter implements FieldPropertiesVisitor<string> {
         }
     }
 
-    public visitBoolean(properties: BooleanFieldPropertiesDto): string {
+    public visitBoolean(_: BooleanFieldPropertiesDto): string {
         return this.value ? 'Yes' : 'No';
     }
 
-    public visitGeolocation(properties: GeolocationFieldPropertiesDto): string {
+    public visitGeolocation(_: GeolocationFieldPropertiesDto): string {
         return `${this.value.longitude}, ${this.value.latitude}`;
     }
 
-    public visitJson(properties: JsonFieldPropertiesDto): string {
+    public visitJson(_: JsonFieldPropertiesDto): string {
         return '<Json />';
     }
 
-    public visitNumber(properties: NumberFieldPropertiesDto): string {
+    public visitNumber(properties: NumberFieldPropertiesDto): FieldValue {
+        if (Types.isNumber(this.value) && properties.editor === 'Stars' && this.allowHtml) {
+            if (this.value <= 0 || this.value > 6) {
+                return new HtmlValue(`&#9733; ${this.value}`);
+            } else {
+                let html = '';
+
+                for (let i = 0; i < this.value; i++) {
+                    html += '&#9733; ';
+                }
+
+                return new HtmlValue(html);
+            }
+        }
+        return `${this.value}`;
+    }
+
+    public visitString(_: StringFieldPropertiesDto): any {
         return this.value;
     }
 
-    public visitString(properties: StringFieldPropertiesDto): string {
-        return this.value;
-    }
-
-    public visitUI(properties: UIFieldPropertiesDto): string {
-        return this.value;
+    public visitUI(_: UIFieldPropertiesDto): any {
+        return '';
     }
 }
 
@@ -236,23 +310,23 @@ export class FieldValidatorsFactory implements FieldPropertiesVisitor<ValidatorF
         return validators;
     }
 
-    public visitBoolean(properties: BooleanFieldPropertiesDto): ValidatorFn[] {
+    public visitBoolean(_: BooleanFieldPropertiesDto): ValidatorFn[] {
         return [];
     }
 
-    public visitDateTime(properties: DateTimeFieldPropertiesDto): ValidatorFn[] {
+    public visitDateTime(_: DateTimeFieldPropertiesDto): ValidatorFn[] {
         return [];
     }
 
-    public visitGeolocation(properties: GeolocationFieldPropertiesDto): ValidatorFn[] {
+    public visitGeolocation(_: GeolocationFieldPropertiesDto): ValidatorFn[] {
         return [];
     }
 
-    public visitJson(properties: JsonFieldPropertiesDto): ValidatorFn[] {
+    public visitJson(_: JsonFieldPropertiesDto): ValidatorFn[] {
         return [];
     }
 
-    public visitUI(properties: UIFieldPropertiesDto): ValidatorFn[] {
+    public visitUI(_: UIFieldPropertiesDto): ValidatorFn[] {
         return [];
     }
 }
@@ -279,11 +353,11 @@ export class FieldDefaultValue implements FieldPropertiesVisitor<any> {
         return field.properties.accept(new FieldDefaultValue(now));
     }
 
-    public visitArray(properties: ArrayFieldPropertiesDto): any {
+    public visitArray(_: ArrayFieldPropertiesDto): any {
         return null;
     }
 
-    public visitAssets(properties: AssetsFieldPropertiesDto): any {
+    public visitAssets(_: AssetsFieldPropertiesDto): any {
         return null;
     }
 
@@ -291,11 +365,11 @@ export class FieldDefaultValue implements FieldPropertiesVisitor<any> {
         return properties.defaultValue;
     }
 
-    public visitGeolocation(properties: GeolocationFieldPropertiesDto): any {
+    public visitGeolocation(_: GeolocationFieldPropertiesDto): any {
         return null;
     }
 
-    public visitJson(properties: JsonFieldPropertiesDto): any {
+    public visitJson(_: JsonFieldPropertiesDto): any {
         return null;
     }
 
@@ -303,7 +377,7 @@ export class FieldDefaultValue implements FieldPropertiesVisitor<any> {
         return properties.defaultValue;
     }
 
-    public visitReferences(properties: ReferencesFieldPropertiesDto): any {
+    public visitReferences(_: ReferencesFieldPropertiesDto): any {
         return null;
     }
 
@@ -311,11 +385,11 @@ export class FieldDefaultValue implements FieldPropertiesVisitor<any> {
         return properties.defaultValue;
     }
 
-    public visitTags(properties: TagsFieldPropertiesDto): any {
+    public visitTags(_: TagsFieldPropertiesDto): any {
         return null;
     }
 
-    public visitUI(properties: UIFieldPropertiesDto): any {
+    public visitUI(_: UIFieldPropertiesDto): any {
         return null;
     }
 }

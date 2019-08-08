@@ -6,10 +6,10 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Newtonsoft.Json;
 using Squidex.Domain.Apps.Entities.Apps;
 using Squidex.Domain.Apps.Entities.Apps.Services;
-using Squidex.Infrastructure;
 using Squidex.Shared;
 using Squidex.Web;
 
@@ -36,11 +36,9 @@ namespace Squidex.Areas.Api.Controllers.Apps.Models
 
         public static ContributorsDto FromApp(IAppEntity app, IAppPlansProvider plans, ApiController controller, bool isInvited)
         {
-            var contributors = app.Contributors.ToArray(x => ContributorDto.FromIdAndRole(x.Key, x.Value, controller, app.Name));
-
             var result = new ContributorsDto
             {
-                Items = contributors,
+                Items = app.Contributors.Select(x => ContributorDto.FromIdAndRole(x.Key, x.Value, controller, app.Name)).ToArray(),
             };
 
             if (isInvited)
