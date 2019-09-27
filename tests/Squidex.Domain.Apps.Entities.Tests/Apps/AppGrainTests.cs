@@ -18,6 +18,7 @@ using Squidex.Domain.Apps.Entities.Apps.State;
 using Squidex.Domain.Apps.Entities.TestHelpers;
 using Squidex.Domain.Apps.Events.Apps;
 using Squidex.Infrastructure;
+using Squidex.Infrastructure.Assets;
 using Squidex.Infrastructure.Commands;
 using Squidex.Infrastructure.Log;
 using Squidex.Shared.Users;
@@ -97,6 +98,64 @@ namespace Squidex.Domain.Apps.Entities.Apps
                     CreateEvent(new AppLanguageAdded { Language = Language.EN }),
                     CreateEvent(new AppPatternAdded { PatternId = patternId1, Name = "Number", Pattern = "[0-9]" }),
                     CreateEvent(new AppPatternAdded { PatternId = patternId2, Name = "Numbers", Pattern = "[0-9]*" })
+                );
+        }
+
+        [Fact]
+        public async Task Update_should_create_events_and_update_state()
+        {
+            var command = new UpdateApp { Label = "my-label", Description = "my-description" };
+
+            await ExecuteCreateAsync();
+
+            var result = await sut.ExecuteAsync(CreateCommand(command));
+
+            result.ShouldBeEquivalent(sut.Snapshot);
+
+            Assert.Equal("my-label", sut.Snapshot.Label);
+            Assert.Equal("my-description", sut.Snapshot.Description);
+
+            LastEvents
+                .ShouldHaveSameEvents(
+                    CreateEvent(new AppUpdated { Label = "my-label", Description = "my-description" })
+                );
+        }
+
+        [Fact]
+        public async Task UploadImage_should_create_events_and_update_state()
+        {
+            var command = new UploadAppImage { File = new AssetFile("image.png", "image/png", 100, () => null) };
+
+            await ExecuteCreateAsync();
+
+            var result = await sut.ExecuteAsync(CreateCommand(command));
+
+            result.ShouldBeEquivalent(sut.Snapshot);
+
+            Assert.Equal("image/png", sut.Snapshot.Image.MimeType);
+
+            LastEvents
+                .ShouldHaveSameEvents(
+                    CreateEvent(new AppImageUploaded { Image = sut.Snapshot.Image })
+                );
+        }
+
+        [Fact]
+        public async Task RemoveImage_should_create_events_and_update_state()
+        {
+            var command = new RemoveAppImage();
+
+            await ExecuteCreateAsync();
+
+            var result = await sut.ExecuteAsync(CreateCommand(command));
+
+            result.ShouldBeEquivalent(sut.Snapshot);
+
+            Assert.Null(sut.Snapshot.Image);
+
+            LastEvents
+                .ShouldHaveSameEvents(
+                    CreateEvent(new AppImageRemoved())
                 );
         }
 

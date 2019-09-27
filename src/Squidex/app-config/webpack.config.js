@@ -18,8 +18,8 @@ const plugins = {
     CircularDependencyPlugin: require('circular-dependency-plugin'),
     // https://github.com/jantimon/html-webpack-plugin
     HtmlWebpackPlugin: require('html-webpack-plugin'),
-    // https://github.com/mishoo/UglifyJS2/tree/harmony
-    UglifyJsPlugin: require('uglifyjs-webpack-plugin'),
+    // https://webpack.js.org/plugins/terser-webpack-plugin/
+    TerserPlugin: require('terser-webpack-plugin'),
     // https://www.npmjs.com/package/@ngtools/webpack
     NgToolsWebpack: require('@ngtools/webpack'),
     // https://github.com/NMFR/optimize-css-assets-webpack-plugin
@@ -125,7 +125,11 @@ module.exports = function (env) {
                 use: [{
                     loader: 'raw-loader'
                 }, {
-                    loader: 'sass-loader', options: { includePaths: [root('app', 'theme')] }
+                    loader: 'sass-loader', options: {
+                        sassOptions: {
+                            includePaths: [root('app', 'theme')]
+                        }
+                    }
                 }],
                 exclude: root('app', 'theme')
             }]
@@ -268,14 +272,15 @@ module.exports = function (env) {
     if (isProduction) {
         config.optimization = {
             minimizer: [
-                new plugins.UglifyJsPlugin({
-                    uglifyOptions: {
-                        compress: false,
-                        ecma: 6,
+                new plugins.TerserPlugin({
+                    terserOptions: {
+                        compress: true,
+                        ecma: 5,
                         mangle: true,
                         output: {
                             comments: false
-                        }
+                        },
+                        safari10: true
                     },
                     extractComments: true
                 }),
@@ -303,7 +308,7 @@ module.exports = function (env) {
         config.module.rules.push({
             test: /\.ts$/,
             use: [{
-                loader: 'istanbul-instrumenter-loader'
+                loader: 'istanbul-instrumenter-loader?esModules=true'
             }, {
                 loader: 'ts-loader'
             }],

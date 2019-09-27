@@ -1,4 +1,4 @@
-<sqx-title message="{app} | {schema} | Contents" parameter1="app" parameter2="schema" [value1]="appsState.appName" [value2]="schema.displayName"></sqx-title>
+<sqx-title [message]="schema.displayName"></sqx-title>
 
 <sqx-panel desiredWidth="*" minWidth="50rem" contentClass="grid" showSidebar="true">
     <ng-container title>
@@ -15,12 +15,11 @@
                 </button>
             </div>
             <div class="col pl-1">
-                <sqx-search-form formClass="form" placeholder="Search for content" fieldExample="data/[MY_FIELD]/iv"
-                    [filter]="filter"
-                    (querySubmit)="search()" 
-                    [queries]="schemaQueries"
-                    expandable="true"
-                    enableArchive="true"
+                <sqx-search-form formClass="form" placeholder="Search for content"
+                    [query]="contentsState.contentsQuery | async"
+                    [queries]="queries"
+                    [queryModel]="queryModel"
+                    (queryChange)="search($event)" 
                     enableShortcut="true">
                 </sqx-search-form>
             </div>
@@ -43,7 +42,7 @@
                 <thead>
                     <tr>
                         <th class="cell-select">
-                            <input type="checkbox" class="form-check" [ngModel]="isAllSelected" (ngModelChange)="selectAll($event)" />
+                            <input type="checkbox" class="form-check" [ngModel]="selectedAll" (ngModelChange)="selectAll($event)" />
                         </th>
                         <th class="cell-actions cell-actions-left">
                             Actions
@@ -54,15 +53,19 @@
                         <th class="cell-auto cell-content" *ngFor="let field of schema.listFields">
                             <sqx-table-header [text]="field.displayName" 
                                 [sortable]="field.properties.isSortable"
-                                [sorting]="filter.sortMode(field) | async"
-                                (sortingChange)="sort(field, $event)">
+                                [field]="field"
+                                [query]="contentsState.contentsQuery | async"
+                                (queryChange)="search($event)"
+                                [language]="language">
                             </sqx-table-header>
                         </th>
                         <th class="cell-time">
                             <sqx-table-header text="Updated"
                                 [sortable]="true"
-                                [sorting]="filter.sortMode('lastModified') | async"
-                                (sortingChange)="sort('lastModified', $event)">
+                                [field]="'lastModified'"
+                                [query]="contentsState.contentsQuery | async"
+                                (queryChange)="search($event)"
+                                [language]="language">
                             </sqx-table-header>
                         </th>
                     </tr>
@@ -88,21 +91,18 @@
         <div class="grid-content" [sqxSyncScrolling]="header">
             <div class="table-container" sqxIgnoreScrollbar>
                 <table class="table table-items table-fixed" [style.minWidth]="minWidth">
-                    <tbody *ngFor="let content of contentsState.contents | async; trackBy: trackByContent">
-                        <tr [sqxContent]="content"
-                            (delete)="delete(content)"
-                            [selected]="isItemSelected(content)"
-                            (selectedChange)="selectItem(content, $event)"
-                            (statusChange)="changeStatus(content, $event)"
-                            (clone)="clone(content)"
-                            [language]="language"
-                            [canClone]="contentsState.snapshot.canCreate"
-                            [routerLink]="[content.id]"
-                            [routerLinkActive]="'active'"
-                            [schema]="schema"
-                            [schemaFields]="schema.listFields">
-                        </tr>
-                        <tr class="spacer"></tr>
+                    <tbody *ngFor="let content of contentsState.contents | async; trackBy: trackByContent"
+                        [sqxContent]="content"
+                        (delete)="delete(content)"
+                        [selected]="isItemSelected(content)"
+                        (selectedChange)="selectItem(content, $event)"
+                        (statusChange)="changeStatus(content, $event)"
+                        (clone)="clone(content)"
+                        [link]="[content.id]"
+                        [language]="language"
+                        [canClone]="contentsState.snapshot.canCreate"
+                        [schema]="schema"
+                        [schemaFields]="schema.listFields">
                     </tbody>
                 </table>
             </div>

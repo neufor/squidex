@@ -5,7 +5,7 @@
  * Copyright (c) Squidex UG (haftungsbeschränkt). All rights reserved.
  */
 
-import { HttpClient, HttpErrorResponse, HttpEventType, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -26,6 +26,8 @@ import {
     Version,
     Versioned
 } from '@app/framework';
+
+import { encodeQuery, Query } from './../state/query';
 
 export class AssetsDto extends ResultSet<AssetDto> {
     public get canCreate() {
@@ -107,36 +109,41 @@ export class AssetsService {
         return this.http.get<{ [name: string]: number }>(url);
     }
 
-    public getAssets(appName: string, take: number, skip: number, query?: string, tags?: string[], ids?: string[]): Observable<AssetsDto> {
+    public getAssets(appName: string, take: number, skip: number, query?: Query, tags?: string[], ids?: string[]): Observable<AssetsDto> {
         let fullQuery = '';
 
         if (ids) {
             fullQuery = `ids=${ids.join(',')}`;
         } else {
-            const queries: string[] = [];
+            const queryObj: Query = {};
 
-            const filters: string[] = [];
+            const filters: any[] = [];
 
-            if (query && query.length > 0) {
-                filters.push(`contains(fileName,'${encodeURIComponent(query)}')`);
+            if (query && query.fullText && query.fullText.length > 0) {
+                filters.push({ path: 'fileName', op: 'contains', value: query.fullText });
             }
 
             if (tags) {
                 for (let tag of tags) {
                     if (tag && tag.length > 0) {
-                        filters.push(`tags eq '${encodeURIComponent(tag)}'`);
+                        filters.push({ path: 'tags', op: 'eq', value: tag });
                     }
                 }
             }
 
             if (filters.length > 0) {
-                queries.push(`$filter=${filters.join(' and ')}`);
+                queryObj.filter = { and: filters };
             }
 
-            queries.push(`$top=${take}`);
-            queries.push(`$skip=${skip}`);
+            if (take > 0) {
+                queryObj.take = take;
+            }
 
-            fullQuery = queries.join('&');
+            if (skip > 0) {
+                queryObj.skip = skip;
+            }
+
+            fullQuery = `q=${encodeQuery(queryObj)}`;
         }
 
         const url = this.apiUrl.buildUrl(`api/apps/${appName}/assets?${fullQuery}`);
@@ -150,12 +157,10 @@ export class AssetsService {
             pretifyError('Failed to load assets. Please reload.'));
     }
 
-    public uploadFile(appName: string, file: File): Observable<number | AssetDto> {
+    public postAssetFile(appName: string, file: File): Observable<number | AssetDto> {
         const url = this.apiUrl.buildUrl(`api/apps/${appName}/assets`);
 
-        const req = new HttpRequest('POST', url, getFormData(file), { reportProgress: true });
-
-        return this.http.request(req).pipe(
+        return HTTP.upload(this.http, 'POST', url, file).pipe(
             filter(event =>
                 event.type === HttpEventType.UploadProgress ||
                 event.type === HttpEventType.Response),
@@ -197,14 +202,12 @@ export class AssetsService {
             pretifyError('Failed to load assets. Please reload.'));
     }
 
-    public replaceFile(appName: string, asset: Resource, file: File, version: Version): Observable<number | AssetDto> {
-        const link = asset._links['upload'];
+    public putAssetFile(appName: string, resource: Resource, file: File, version: Version): Observable<number | AssetDto> {
+        const link = resource._links['upload'];
 
         const url = this.apiUrl.buildUrl(link.href);
 
-        const req = new HttpRequest(link.method, url, getFormData(file), { headers: new HttpHeaders().set('If-Match', version.value), reportProgress: true });
-
-        return this.http.request(req).pipe(
+        return HTTP.upload(this.http, link.method, url, file, version).pipe(
             filter(event =>
                 event.type === HttpEventType.UploadProgress ||
                 event.type === HttpEventType.Response),
@@ -228,14 +231,14 @@ export class AssetsService {
             }),
             tap(value => {
                 if (!Types.isNumber(value)) {
-                    this.analytics.trackEvent('Analytics', 'Replaced', appName);
+                    this.analytics.trackEvent('Asset', 'Replaced', appName);
                 }
             }),
             pretifyError('Failed to replace asset. Please reload.'));
     }
 
-    public putAsset(appName: string, asset: Resource, dto: AnnotateAssetDto, version: Version): Observable<AssetDto> {
-        const link = asset._links['update'];
+    public putAsset(appName: string, resource: Resource, dto: AnnotateAssetDto, version: Version): Observable<AssetDto> {
+        const link = resource._links['update'];
 
         const url = this.apiUrl.buildUrl(link.href);
 
@@ -260,14 +263,6 @@ export class AssetsService {
             }),
             pretifyError('Failed to delete asset. Please reload.'));
     }
-}
-
-function getFormData(file: File) {
-    const formData = new FormData();
-
-    formData.append('file', file);
-
-    return formData;
 }
 
 function parseAsset(response: any) {

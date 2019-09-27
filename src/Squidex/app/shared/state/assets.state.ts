@@ -20,6 +20,8 @@ import {
 
 import { AssetDto, AssetsService} from './../services/assets.service';
 import { AppsState } from './apps.state';
+import { SavedQuery } from './queries';
+import { encodeQuery, Query } from './query';
 
 interface Snapshot {
     // All assets tags.
@@ -35,7 +37,10 @@ interface Snapshot {
     assetsPager: Pager;
 
     // The query to filter assets.
-    assetsQuery?: string;
+    assetsQuery?: Query;
+
+    // The json of the assets query.
+    assetsQueryJson: string;
 
     // Indicates if the assets are loaded.
     isLoaded?: boolean;
@@ -46,14 +51,20 @@ interface Snapshot {
 
 @Injectable()
 export class AssetsState extends State<Snapshot> {
+    public tagsUnsorted =
+        this.project(x => x.tags);
+
+    public tagsSelected =
+        this.project(x => x.tags);
+
     public tags =
-        this.project2(x => x.tags, x => sort(x));
+        this.projectFrom(this.tagsUnsorted, x => sort(x));
 
     public tagsNames =
-        this.project2(x => x.tags, x => Object.keys(x));
+        this.projectFrom(this.tagsUnsorted, x => Object.keys(x));
 
     public selectedTagNames =
-        this.project2(x => x.tagsSelected, x => Object.keys(x));
+        this.projectFrom(this.tagsSelected, x => Object.keys(x));
 
     public assets =
         this.project(x => x.assets);
@@ -65,17 +76,17 @@ export class AssetsState extends State<Snapshot> {
         this.project(x => x.assetsPager);
 
     public isLoaded =
-        this.project(x => !!x.isLoaded);
+        this.project(x => x.isLoaded === true);
 
     public canCreate =
-        this.project(x => !!x.canCreate);
+        this.project(x => x.canCreate === true);
 
     constructor(
         private readonly appsState: AppsState,
         private readonly assetsService: AssetsService,
         private readonly dialogs: DialogService
     ) {
-        super({ assets: ImmutableArray.empty(), assetsPager: new Pager(0, 0, 30), tags: {}, tagsSelected: {} });
+        super({ assets: ImmutableArray.empty(), assetsPager: new Pager(0, 0, 30), assetsQueryJson: '', tags: {}, tagsSelected: {} });
     }
 
     public load(isReload = false): Observable<any> {
@@ -198,8 +209,8 @@ export class AssetsState extends State<Snapshot> {
         return this.loadInternal();
     }
 
-    public search(query?: string): Observable<any> {
-        this.next(s => ({ ...s, assetsPager: new Pager(0, 0, 30), assetsQuery: query }));
+    public search(query?: Query): Observable<any> {
+        this.next(s => ({ ...s, assetsPager: new Pager(0, 0, 30), assetsQuery: query, assetsQueryJson: encodeQuery(query) }));
 
         return this.loadInternal();
     }
@@ -214,6 +225,10 @@ export class AssetsState extends State<Snapshot> {
         this.next(s => ({ ...s, assetsPager: s.assetsPager.goPrev() }));
 
         return this.loadInternal();
+    }
+
+    public isQueryUsed(saved: SavedQuery) {
+        return this.snapshot.assetsQueryJson === saved.queryJson;
     }
 
     public isTagSelected(tag: string) {

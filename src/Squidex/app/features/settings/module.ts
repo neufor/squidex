@@ -16,20 +16,28 @@ import {
 } from '@app/shared';
 
 import {
-    BackupDurationPipe,
+    BackupComponent,
     BackupsPageComponent,
+    ClientAddFormComponent,
     ClientComponent,
     ClientsPageComponent,
+    ContributorAddFormComponent,
+    ContributorComponent,
     ContributorsPageComponent,
+    ImportContributorsDialogComponent,
+    LanguageAddFormComponent,
     LanguageComponent,
     LanguagesPageComponent,
     MorePageComponent,
     PatternComponent,
     PatternsPageComponent,
+    PlanComponent,
     PlansPageComponent,
+    RoleAddFormComponent,
     RoleComponent,
     RolesPageComponent,
     SettingsAreaComponent,
+    WorkflowAddFormComponent,
     WorkflowComponent,
     WorkflowsPageComponent,
     WorkflowStepComponent,
@@ -42,10 +50,7 @@ const routes: Routes = [
         component: SettingsAreaComponent,
         children: [
             {
-                path: ''
-            },
-            {
-                path: 'more',
+                path: '',
                 component: MorePageComponent
             },
             {
@@ -198,24 +203,32 @@ const routes: Routes = [
         RouterModule.forChild(routes)
     ],
     declarations: [
-        BackupDurationPipe,
+        BackupComponent,
         BackupsPageComponent,
+        ClientAddFormComponent,
         ClientComponent,
         ClientsPageComponent,
+        ContributorAddFormComponent,
+        ContributorComponent,
         ContributorsPageComponent,
+        ImportContributorsDialogComponent,
+        LanguageAddFormComponent,
         LanguageComponent,
         LanguagesPageComponent,
         MorePageComponent,
         PatternComponent,
         PatternsPageComponent,
+        PlanComponent,
         PlansPageComponent,
+        RoleAddFormComponent,
         RoleComponent,
         RolesPageComponent,
         SettingsAreaComponent,
+        WorkflowAddFormComponent,
         WorkflowComponent,
         WorkflowsPageComponent,
-        WorkflowTransitionComponent,
-        WorkflowStepComponent
+        WorkflowStepComponent,
+        WorkflowTransitionComponent
     ]
 })
 export class SqxFeatureSettingsModule {}

@@ -9,11 +9,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 import {
-    AppsState,
     AssetsState,
-    FilterState,
     LocalStoreService,
     Queries,
+    Query,
     ResourceOwner,
     UIState
 } from '@app/shared';
@@ -28,12 +27,9 @@ export class AssetsPageComponent extends ResourceOwner implements OnInit {
 
     public queries = new Queries(this.uiState, 'assets');
 
-    public filter = new FilterState();
-
     public isListView: boolean;
 
     constructor(
-        public readonly appsState: AppsState,
         public readonly assetsState: AssetsState,
         private readonly localStore: LocalStoreService,
         private readonly uiState: UIState
@@ -44,12 +40,6 @@ export class AssetsPageComponent extends ResourceOwner implements OnInit {
     }
 
     public ngOnInit() {
-        this.own(
-            this.assetsState.assetsQuery
-                .subscribe(query => {
-                    this.filter.setQuery(query);
-                }));
-
         this.assetsState.load();
     }
 
@@ -57,8 +47,8 @@ export class AssetsPageComponent extends ResourceOwner implements OnInit {
         this.assetsState.load(true);
     }
 
-    public search() {
-        this.assetsState.search(this.filter.apiFilter);
+    public search(query: Query) {
+        this.assetsState.search(query);
     }
 
     public selectTags(tags: string[]) {
@@ -83,4 +73,3 @@ export class AssetsPageComponent extends ResourceOwner implements OnInit {
         this.localStore.setBoolean('squidex.assets.list-view', isListView);
     }
 }
-

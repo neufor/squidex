@@ -21,7 +21,7 @@ import { AuthService } from './../services/auth.service';
 import { PlanDto, PlansService } from './../services/plans.service';
 import { AppsState } from './apps.state';
 
-interface PlanInfo {
+export interface PlanInfo {
     // The plan.
     plan: PlanDto;
 
@@ -55,10 +55,10 @@ export class PlansState extends State<Snapshot> {
         this.project(x => x.plans);
 
     public isOwner =
-        this.project(x => !!x.isOwner);
+        this.project(x => x.isOwner === true);
 
     public isLoaded =
-        this.project(x => !!x.isLoaded);
+        this.project(x => x.isLoaded === true);
 
     public isDisabled =
         this.project(x => !x.isOwner);
@@ -137,4 +137,3 @@ export class PlansState extends State<Snapshot> {
         return this.snapshot.version;
     }
 }
-

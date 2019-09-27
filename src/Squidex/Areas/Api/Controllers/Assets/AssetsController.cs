@@ -23,6 +23,7 @@ using Squidex.Domain.Apps.Entities.Assets.Commands;
 using Squidex.Infrastructure;
 using Squidex.Infrastructure.Assets;
 using Squidex.Infrastructure.Commands;
+using Squidex.Infrastructure.Validation;
 using Squidex.Shared;
 using Squidex.Web;
 
@@ -178,7 +179,7 @@ namespace Squidex.Areas.Api.Controllers.Assets
         /// </remarks>
         [HttpPost]
         [Route("apps/{app}/assets/")]
-        [ProducesResponseType(typeof(AssetDto), 200)]
+        [ProducesResponseType(typeof(AssetDto), 201)]
         [AssetRequestSizeLimit]
         [ApiPermission(Permissions.AppAssetsCreate)]
         [ApiCosts(1)]
@@ -312,9 +313,7 @@ namespace Squidex.Areas.Api.Controllers.Assets
                 throw new ValidationException("Cannot create asset.", error);
             }
 
-            var assetFile = new AssetFile(formFile.FileName, formFile.ContentType, formFile.Length, formFile.OpenReadStream);
-
-            return assetFile;
+            return formFile.ToAssetFile();
         }
     }
 }

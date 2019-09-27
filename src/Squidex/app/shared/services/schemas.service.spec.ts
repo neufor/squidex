@@ -27,7 +27,6 @@ import {
 
 describe('SchemasService', () => {
     const version = new Version('1');
-    const versionNew = new Version('2');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -102,13 +101,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('GET');
         expect(req.request.headers.get('If-Match')).toBeNull();
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make post request to create schema',
@@ -127,13 +122,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('POST');
         expect(req.request.headers.get('If-Match')).toBeNull();
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to update schema',
@@ -158,13 +149,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to update schema scripts',
@@ -189,13 +176,36 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
+        req.flush(schemaDetailsResponse(12));
+
+        expect(schema!).toEqual(createSchemaDetails(12));
+    }));
+
+    it('should make put request to synchronize schema',
+        inject([SchemasService, HttpTestingController], (schemasService: SchemasService, httpMock: HttpTestingController) => {
+
+        const dto = {};
+
+        const resource: Resource = {
+            _links: {
+                ['update/sync']: { method: 'PUT', href: '/api/apps/my-app/schemas/my-schema/sync' }
             }
+        };
+
+        let schema: SchemaDetailsDto;
+
+        schemasService.putSchemaSync('my-app', resource, dto, version).subscribe(result => {
+            schema = result;
         });
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        const req = httpMock.expectOne('http://service/p/api/apps/my-app/schemas/my-schema/sync');
+
+        expect(req.request.method).toEqual('PUT');
+        expect(req.request.headers.get('If-Match')).toBe(version.value);
+
+        req.flush(schemaDetailsResponse(12));
+
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to update category',
@@ -220,13 +230,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to update preview urls',
@@ -251,13 +257,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make post request to add field',
@@ -282,13 +284,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('POST');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to publish schema',
@@ -311,13 +309,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to unpublish schema',
@@ -340,13 +334,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to update field',
@@ -371,13 +361,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to update field ordering',
@@ -402,13 +388,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to lock field',
@@ -431,13 +413,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to enable field',
@@ -460,13 +438,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to disable field',
@@ -489,13 +463,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to show field',
@@ -518,13 +488,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make put request to hide field',
@@ -547,13 +513,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make delete request to delete field',
@@ -576,13 +538,9 @@ describe('SchemasService', () => {
         expect(req.request.method).toEqual('DELETE');
         expect(req.request.headers.get('If-Match')).toBe(version.value);
 
-        req.flush(schemaDetailsResponse(12), {
-            headers: {
-                etag: '2'
-            }
-        });
+        req.flush(schemaDetailsResponse(12));
 
-        expect(schema!).toEqual(createSchemaDetails(12, versionNew));
+        expect(schema!).toEqual(createSchemaDetails(12));
     }));
 
     it('should make delete request to delete schema',
@@ -612,9 +570,9 @@ describe('SchemasService', () => {
             isSingleton: id % 2 === 0,
             isPublished: id % 3 === 0,
             created: `${id % 1000 + 2000}-12-12T10:10:00`,
-            createdBy: `creator-${id}`,
+            createdBy: `creator${id}`,
             lastModified: `${id % 1000 + 2000}-11-11T10:10:00`,
-            lastModifiedBy: `modifier-${id}`,
+            lastModifiedBy: `modifier${id}`,
             properties: {
                 label: `label${id}${suffix}`,
                 hints: `hints${id}${suffix}`
@@ -634,9 +592,10 @@ describe('SchemasService', () => {
             isSingleton: id % 2 === 0,
             isPublished: id % 3 === 0,
             created: `${id % 1000 + 2000}-12-12T10:10:00`,
-            createdBy: `creator-${id}`,
+            createdBy: `creator${id}`,
             lastModified: `${id % 1000 + 2000}-11-11T10:10:00`,
-            lastModifiedBy: `modifier-${id}`,
+            lastModifiedBy: `modifier${id}`,
+            version: `${id}`,
             properties: {
                 label: `label${id}${suffix}`,
                 hints: `hints${id}${suffix}`
@@ -816,12 +775,12 @@ export function createSchema(id: number, suffix = '') {
         new SchemaPropertiesDto(`label${id}${suffix}`, `hints${id}${suffix}`),
         id % 2 === 0,
         id % 3 === 0,
-        DateTime.parseISO_UTC(`${id % 1000 + 2000}-12-12T10:10:00`), `creator-${id}`,
-        DateTime.parseISO_UTC(`${id % 1000 + 2000}-11-11T10:10:00`), `modifier-${id}`,
+        DateTime.parseISO_UTC(`${id % 1000 + 2000}-12-12T10:10:00`), `creator${id}`,
+        DateTime.parseISO_UTC(`${id % 1000 + 2000}-11-11T10:10:00`), `modifier${id}`,
         new Version(`${id}`));
 }
 
-export function createSchemaDetails(id: number, version: Version, suffix = '') {
+export function createSchemaDetails(id: number, suffix = '') {
     const links: ResourceLinks = {
         update: { method: 'PUT', href: `/schemas/${id}` }
     };
@@ -833,9 +792,9 @@ export function createSchemaDetails(id: number, version: Version, suffix = '') {
         new SchemaPropertiesDto(`label${id}${suffix}`, `hints${id}${suffix}`),
         id % 2 === 0,
         id % 3 === 0,
-        DateTime.parseISO_UTC(`${id % 1000 + 2000}-12-12T10:10:00`), `creator-${id}`,
-        DateTime.parseISO_UTC(`${id % 1000 + 2000}-11-11T10:10:00`), `modifier-${id}`,
-        version,
+        DateTime.parseISO_UTC(`${id % 1000 + 2000}-12-12T10:10:00`), `creator${id}`,
+        DateTime.parseISO_UTC(`${id % 1000 + 2000}-11-11T10:10:00`), `modifier${id}`,
+        new Version(`${id}`),
         [
             new RootFieldDto({}, 11, 'field11', createProperties('Array'), 'language', true, true, true, [
                 new NestedFieldDto({}, 101, 'field101', createProperties('String'), 11, true, true, true),

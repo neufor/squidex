@@ -29,7 +29,7 @@ namespace Squidex.Areas.Api.Config.OpenApi
             services.AddSingletonAs<RuleActionProcessor>()
                 .As<IDocumentProcessor>();
 
-            services.AddSingletonAs<ThemeProcessor>()
+            services.AddSingletonAs<CommonProcessor>()
                 .As<IDocumentProcessor>();
 
             services.AddSingletonAs<XmlTagProcessor>()
@@ -78,7 +78,7 @@ namespace Squidex.Areas.Api.Config.OpenApi
 
                 new PrimitiveTypeMapper(typeof(Language), s => s.Type = JsonObjectType.String),
                 new PrimitiveTypeMapper(typeof(RefToken), s => s.Type = JsonObjectType.String),
-                new PrimitiveTypeMapper(typeof(Status), s => s.Type = JsonObjectType.String),
+                new PrimitiveTypeMapper(typeof(Status), s => s.Type = JsonObjectType.String)
             };
         }
     }

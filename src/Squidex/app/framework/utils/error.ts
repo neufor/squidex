@@ -5,6 +5,8 @@
  * Copyright (c) Squidex UG (haftungsbeschränkt). All rights reserved.
  */
 
+import { Types } from './types';
+
 export class ErrorDto {
     public readonly displayMessage: string;
 
@@ -22,6 +24,15 @@ export class ErrorDto {
     }
 }
 
+export function getDisplayMessage(error?: string | ErrorDto) {
+    if (!error) {
+        return null;
+    } else if (Types.is(error, ErrorDto)) {
+        return error.displayMessage;
+    } else {
+        return error;
+    }
+}
 
 function formatMessage(message: string, details?: string[]) {
     const appendLast = (row: string, char: string) => {

@@ -7,6 +7,7 @@
 
 export * from './interceptors/auth.interceptor';
 
+export * from './services/autosave.service';
 export * from './services/app-languages.service';
 export * from './services/apps.service';
 export * from './services/assets.service';
@@ -49,13 +50,13 @@ export * from './state/contents.forms';
 export * from './state/contents.state';
 export * from './state/contributors.forms';
 export * from './state/contributors.state';
-export * from './state/filter.state';
 export * from './state/languages.forms';
 export * from './state/languages.state';
 export * from './state/patterns.forms';
 export * from './state/patterns.state';
 export * from './state/plans.state';
 export * from './state/queries';
+export * from './state/query';
 export * from './state/roles.forms';
 export * from './state/roles.state';
 export * from './state/rule-events.state';

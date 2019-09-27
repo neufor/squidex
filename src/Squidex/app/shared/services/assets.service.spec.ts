@@ -20,6 +20,7 @@ import {
     ResourceLinks,
     Version
 } from '@app/shared/internal';
+import { encodeQuery } from '../state/query';
 
 describe('AssetsService', () => {
     const version = new Version('1');
@@ -75,7 +76,7 @@ describe('AssetsService', () => {
             assets = result;
         });
 
-        const req = httpMock.expectOne('http://service/p/api/apps/my-app/assets?$top=17&$skip=13');
+        const req = httpMock.expectOne(`http://service/p/api/apps/my-app/assets?q=${encodeQuery({ take: 17, skip: 13 })}`);
 
         expect(req.request.method).toEqual('GET');
         expect(req.request.headers.get('If-Match')).toBeNull();
@@ -117,9 +118,9 @@ describe('AssetsService', () => {
     it('should append query to find by name',
         inject([AssetsService, HttpTestingController], (assetsService: AssetsService, httpMock: HttpTestingController) => {
 
-        assetsService.getAssets('my-app', 17, 13, 'my-query').subscribe();
+        assetsService.getAssets('my-app', 17, 13, { fullText: 'my-query' }).subscribe();
 
-        const req = httpMock.expectOne(`http://service/p/api/apps/my-app/assets?$filter=contains(fileName,'my-query')&$top=17&$skip=13`);
+        const req = httpMock.expectOne(`http://service/p/api/apps/my-app/assets?q=${encodeQuery({ filter: { and: [{ path: 'fileName', op: 'contains', value: 'my-query' }] }, take: 17, skip: 13 })}`);
 
         expect(req.request.method).toEqual('GET');
         expect(req.request.headers.get('If-Match')).toBeNull();
@@ -127,12 +128,12 @@ describe('AssetsService', () => {
         req.flush({ total: 10, items: [] });
     }));
 
-    it('should append query to find by name and tag',
+    it('should append query to find by tag',
         inject([AssetsService, HttpTestingController], (assetsService: AssetsService, httpMock: HttpTestingController) => {
 
-        assetsService.getAssets('my-app', 17, 13, 'my-query', ['tag1', 'tag2']).subscribe();
+        assetsService.getAssets('my-app', 17, 13, undefined, ['tag1']).subscribe();
 
-        const req = httpMock.expectOne(`http://service/p/api/apps/my-app/assets?$filter=contains(fileName,'my-query') and tags eq 'tag1' and tags eq 'tag2'&$top=17&$skip=13`);
+        const req = httpMock.expectOne(`http://service/p/api/apps/my-app/assets?q=${encodeQuery({ filter: { and: [{ path: 'tags', op: 'eq', value: 'tag1' }] }, take: 17, skip: 13 })}`);
 
         expect(req.request.method).toEqual('GET');
         expect(req.request.headers.get('If-Match')).toBeNull();
@@ -158,7 +159,7 @@ describe('AssetsService', () => {
 
         let asset: AssetDto;
 
-        assetsService.uploadFile('my-app', null!).subscribe(result => {
+        assetsService.postAssetFile('my-app', null!).subscribe(result => {
             asset = <AssetDto>result;
         });
 
@@ -178,7 +179,7 @@ describe('AssetsService', () => {
         let asset: AssetDto;
         let error: ErrorDto;
 
-        assetsService.uploadFile('my-app', null!).subscribe(result => {
+        assetsService.postAssetFile('my-app', null!).subscribe(result => {
             asset = <AssetDto>result;
         }, e => {
             error = e;
@@ -206,7 +207,7 @@ describe('AssetsService', () => {
 
         let asset: AssetDto;
 
-        assetsService.replaceFile('my-app', resource, null!, version).subscribe(result => {
+        assetsService.putAssetFile('my-app', resource, null!, version).subscribe(result => {
             asset = <AssetDto>result;
         });
 
@@ -215,16 +216,12 @@ describe('AssetsService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toEqual(version.value);
 
-        req.flush(assetResponse(123), {
-            headers: {
-                etag: '1'
-            }
-        });
+        req.flush(assetResponse(123));
 
         expect(asset!).toEqual(createAsset(123));
     }));
 
-    it('should return proper error when replace failed with 413',
+    it('should return proper error when replacing asset content failed with 413',
         inject([AssetsService, HttpTestingController], (assetsService: AssetsService, httpMock: HttpTestingController) => {
 
         const resource: Resource = {
@@ -236,7 +233,7 @@ describe('AssetsService', () => {
         let asset: AssetDto;
         let error: ErrorDto;
 
-        assetsService.replaceFile('my-app', resource, null!, version).subscribe(result => {
+        assetsService.putAssetFile('my-app', resource, null!, version).subscribe(result => {
             asset = <AssetDto>result;
         }, e => {
             error = e;
@@ -275,11 +272,7 @@ describe('AssetsService', () => {
         expect(req.request.method).toEqual('PUT');
         expect(req.request.headers.get('If-Match')).toEqual(version.value);
 
-        req.flush(assetResponse(123), {
-            headers: {
-                etag: '1'
-            }
-        });
+        req.flush(assetResponse(123));
 
         expect(asset!).toEqual(createAsset(123));
     }));
@@ -307,9 +300,9 @@ describe('AssetsService', () => {
         return {
             id: `id${id}`,
             created: `${id % 1000 + 2000}-12-12T10:10:00`,
-            createdBy: `creator-${id}`,
+            createdBy: `creator${id}`,
             lastModified: `${id % 1000 + 2000}-11-11T10:10:00`,
-            lastModifiedBy: `modifier-${id}`,
+            lastModifiedBy: `modifier${id}`,
             fileName: `My Name${id}${suffix}.png`,
             fileHash: `My Hash${id}${suffix}`,
             fileType: 'png',
@@ -343,8 +336,8 @@ export function createAsset(id: number, tags?: string[], suffix = '') {
 
     return new AssetDto(links, meta,
         `id${id}`,
-        DateTime.parseISO_UTC(`${id % 1000 + 2000}-12-12T10:10:00`), `creator-${id}`,
-        DateTime.parseISO_UTC(`${id % 1000 + 2000}-11-11T10:10:00`), `modifier-${id}`,
+        DateTime.parseISO_UTC(`${id % 1000 + 2000}-12-12T10:10:00`), `creator${id}`,
+        DateTime.parseISO_UTC(`${id % 1000 + 2000}-11-11T10:10:00`), `modifier${id}`,
         `My Name${id}${suffix}.png`,
         `My Hash${id}${suffix}`,
         'png',

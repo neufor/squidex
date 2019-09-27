@@ -44,25 +44,22 @@ namespace Squidex.Areas.Api.Controllers.Apps.Models
         /// </summary>
         public Status Initial { get; set; }
 
-        public static WorkflowDto FromWorkflow(Guid id, Workflow workflow, ApiController controller, string app)
+        public static WorkflowDto FromWorkflow(Guid id, Workflow workflow)
         {
-            var result = SimpleMapper.Map(workflow, new WorkflowDto { Id = id });
+            var result = SimpleMapper.Map(workflow, new WorkflowDto
+            {
+                Steps = workflow.Steps.ToDictionary(
+                    x => x.Key,
+                    x => WorkflowStepDto.FromWorkflowStep(x.Value)),
+                Id = id
+            });
 
-            result.Steps = workflow.Steps.ToDictionary(
-                x => x.Key,
-                x => SimpleMapper.Map(x.Value, new WorkflowStepDto
-                {
-                    Transitions = x.Value.Transitions.ToDictionary(
-                        y => y.Key,
-                        y => new WorkflowTransitionDto { Expression = y.Value.Expression, Role = y.Value.Role })
-                }));
-
-            return result.CreateLinks(controller, app, id);
+            return result;
         }
 
-        private WorkflowDto CreateLinks(ApiController controller, string app, Guid id)
+        public WorkflowDto WithLinks(ApiController controller, string app)
         {
-            var values = new { app, id };
+            var values = new { app, id = Id };
 
             if (controller.HasPermission(Permissions.AppWorkflowsUpdate, app))
             {

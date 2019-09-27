@@ -57,7 +57,7 @@ export const fieldTypes: { type: FieldType, description: string }[] = [
 
 export const fieldInvariant = 'iv';
 
-export function createProperties(fieldType: FieldType, values: Object | null = null): FieldPropertiesDto {
+export function createProperties(fieldType: FieldType, values?: any): FieldPropertiesDto {
     let properties: FieldPropertiesDto;
 
     switch (fieldType) {
@@ -68,10 +68,10 @@ export function createProperties(fieldType: FieldType, values: Object | null = n
             properties = new AssetsFieldPropertiesDto();
             break;
         case 'Boolean':
-            properties = new BooleanFieldPropertiesDto('Checkbox');
+            properties = new BooleanFieldPropertiesDto();
             break;
         case 'DateTime':
-            properties = new DateTimeFieldPropertiesDto('DateTime');
+            properties = new DateTimeFieldPropertiesDto();
             break;
         case 'Geolocation':
             properties = new GeolocationFieldPropertiesDto();
@@ -80,19 +80,16 @@ export function createProperties(fieldType: FieldType, values: Object | null = n
             properties = new JsonFieldPropertiesDto();
             break;
         case 'Number':
-            properties = new NumberFieldPropertiesDto('Input');
+            properties = new NumberFieldPropertiesDto();
             break;
         case 'References':
-            properties = new ReferencesFieldPropertiesDto('List');
+            properties = new ReferencesFieldPropertiesDto();
             break;
         case 'String':
-            properties = new StringFieldPropertiesDto('Input');
+            properties = new StringFieldPropertiesDto();
             break;
         case 'Tags':
-            properties = new TagsFieldPropertiesDto('Tags');
-            break;
-        case 'Tags':
-            properties = new TagsFieldPropertiesDto('Tags');
+            properties = new TagsFieldPropertiesDto();
             break;
         case 'UI':
             properties = new UIFieldPropertiesDto();
@@ -136,19 +133,15 @@ export abstract class FieldPropertiesDto {
     public abstract fieldType: FieldType;
 
     public readonly editorUrl?: string;
-    public readonly label?: string;
     public readonly hints?: string;
-    public readonly placeholder?: string;
-    public readonly isRequired: boolean = false;
     public readonly isListField: boolean = false;
     public readonly isReferenceField: boolean = false;
+    public readonly isRequired: boolean = false;
+    public readonly label?: string;
+    public readonly placeholder?: string;
 
-    constructor(public readonly editor: string,
-        props?: Partial<FieldPropertiesDto>
-    ) {
-        if (props) {
-            Object.assign(this, props);
-        }
+    public get isTranslateable() {
+        return false;
     }
 
     public get isComplexUI() {
@@ -169,14 +162,8 @@ export abstract class FieldPropertiesDto {
 export class ArrayFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'Array';
 
-    public readonly minItems?: number;
     public readonly maxItems?: number;
-
-    constructor(
-        props?: Partial<ArrayFieldPropertiesDto>
-    ) {
-        super('Default', props);
-    }
+    public readonly minItems?: number;
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
         return visitor.visitArray(this);
@@ -186,28 +173,22 @@ export class ArrayFieldPropertiesDto extends FieldPropertiesDto {
 export class AssetsFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'Assets';
 
-    public readonly minItems?: number;
-    public readonly maxItems?: number;
-    public readonly minSize?: number;
-    public readonly maxSize?: number;
+    public readonly allowDuplicates?: boolean;
     public readonly allowedExtensions?: string[];
-    public readonly mustBeImage?: boolean;
-    public readonly minWidth?: number;
+    public readonly aspectHeight?: number;
+    public readonly aspectWidth?: number;
+    public readonly maxHeight?: number;
+    public readonly maxItems?: number;
+    public readonly maxSize?: number;
     public readonly maxWidth?: number;
     public readonly minHeight?: number;
-    public readonly maxHeight?: number;
-    public readonly aspectWidth?: number;
-    public readonly aspectHeight?: number;
-    public readonly allowDuplicates?: boolean;
+    public readonly minItems?: number;
+    public readonly minSize?: number;
+    public readonly minWidth?: number;
+    public readonly mustBeImage?: boolean;
 
     public get isSortable() {
         return false;
-    }
-
-    constructor(
-        props?: Partial<AssetsFieldPropertiesDto>
-    ) {
-        super('Default', props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -215,20 +196,17 @@ export class AssetsFieldPropertiesDto extends FieldPropertiesDto {
     }
 }
 
+export type BooleanFieldEditor = 'Checkbox' | 'Toggle';
+
 export class BooleanFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'Boolean';
 
-    public readonly inlineEditable: boolean = false;
     public readonly defaultValue?: boolean;
+    public readonly editor: BooleanFieldEditor = 'Checkbox';
+    public readonly inlineEditable: boolean = false;
 
     public get isComplexUI() {
         return false;
-    }
-
-    constructor(editor: string,
-        props?: Partial<BooleanFieldPropertiesDto>
-    ) {
-        super(editor, props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -236,22 +214,19 @@ export class BooleanFieldPropertiesDto extends FieldPropertiesDto {
     }
 }
 
+export type DateTimeFieldEditor = 'DateTime' | 'Date';
+
 export class DateTimeFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'DateTime';
 
+    public readonly calculatedDefaultValue?: string;
     public readonly defaultValue?: string;
+    public readonly editor: DateTimeFieldEditor = 'DateTime';
     public readonly maxValue?: string;
     public readonly minValue?: string;
-    public readonly calculatedDefaultValue?: string;
 
     public get isComplexUI() {
         return false;
-    }
-
-    constructor(editor: string,
-        props?: Partial<DateTimeFieldPropertiesDto>
-    ) {
-        super(editor, props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -259,17 +234,15 @@ export class DateTimeFieldPropertiesDto extends FieldPropertiesDto {
     }
 }
 
+export type GeolocationFieldEditor = 'Map';
+
 export class GeolocationFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'Geolocation';
 
+    public readonly editor: GeolocationFieldEditor = 'Map';
+
     public get isSortable() {
         return false;
-    }
-
-    constructor(
-        props?: Partial<GeolocationFieldPropertiesDto>
-    ) {
-        super('Map', props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -284,35 +257,26 @@ export class JsonFieldPropertiesDto extends FieldPropertiesDto {
         return false;
     }
 
-    constructor(
-        props?: Partial<JsonFieldPropertiesDto>
-    ) {
-        super('Default', props);
-    }
-
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
         return visitor.visitJson(this);
     }
 }
 
+export type NumberFieldEditor = 'Input' | 'Radio' | 'Dropdown' | 'Stars';
+
 export class NumberFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'Number';
 
+    public readonly allowedValues?: number[];
+    public readonly defaultValue?: number;
+    public readonly editor: NumberFieldEditor = 'Input';
     public readonly inlineEditable: boolean = false;
     public readonly isUnique: boolean = false;
-    public readonly defaultValue?: number;
     public readonly maxValue?: number;
     public readonly minValue?: number;
-    public readonly allowedValues?: number[];
 
     public get isComplexUI() {
         return false;
-    }
-
-    constructor(editor: string,
-        props?: Partial<NumberFieldPropertiesDto>
-    ) {
-        super(editor, props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -320,24 +284,20 @@ export class NumberFieldPropertiesDto extends FieldPropertiesDto {
     }
 }
 
+export type ReferencesFieldEditor = 'List' | 'Dropdown';
+
 export class ReferencesFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'References';
 
-    public readonly minItems?: number;
-    public readonly maxItems?: number;
-    public readonly editor: string;
-    public readonly schemaId?: string;
-    public readonly resolveReference?: boolean;
     public readonly allowDuplicates?: boolean;
+    public readonly editor: ReferencesFieldEditor = 'List';
+    public readonly maxItems?: number;
+    public readonly minItems?: number;
+    public readonly resolveReference?: boolean;
+    public readonly schemaId?: string;
 
     public get isSortable() {
         return false;
-    }
-
-    constructor(editor: string,
-        props?: Partial<ReferencesFieldPropertiesDto>
-    ) {
-        super(editor, props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -345,26 +305,27 @@ export class ReferencesFieldPropertiesDto extends FieldPropertiesDto {
     }
 }
 
+export type StringEditor = 'Color' | 'Dropdown' | 'Html' | 'Input' | 'Markdown' | 'Radio' | 'RichText' | 'Slug' | 'TextArea';
+
 export class StringFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'String';
 
-    public readonly inlineEditable = false;
-    public readonly isUnique: boolean = false;
+    public readonly allowedValues?: string[];
     public readonly defaultValue?: string;
+    public readonly editor: StringEditor = 'Input';
+    public readonly inlineEditable: boolean = false;
+    public readonly isUnique: boolean = false;
+    public readonly maxLength?: number;
+    public readonly minLength?: number;
     public readonly pattern?: string;
     public readonly patternMessage?: string;
-    public readonly minLength?: number;
-    public readonly maxLength?: number;
-    public readonly allowedValues?: string[];
 
     public get isComplexUI() {
         return this.editor !== 'Input' && this.editor !== 'Color' && this.editor !== 'Radio' && this.editor !== 'Slug' && this.editor !== 'TextArea';
     }
 
-    constructor(editor: string,
-        props?: Partial<StringFieldPropertiesDto>
-    ) {
-        super(editor, props);
+    public get isTranslateable() {
+        return this.editor === 'Input' || this.editor === 'TextArea';
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -372,12 +333,15 @@ export class StringFieldPropertiesDto extends FieldPropertiesDto {
     }
 }
 
+export type TagsFieldEditor = 'Tags' | 'Checkboxes' | 'Dropdown';
+
 export class TagsFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'Tags';
 
-    public readonly minItems?: number;
-    public readonly maxItems?: number;
     public readonly allowedValues?: string[];
+    public readonly editor: TagsFieldEditor = 'Tags';
+    public readonly maxItems?: number;
+    public readonly minItems?: number;
 
     public get isComplexUI() {
         return false;
@@ -385,12 +349,6 @@ export class TagsFieldPropertiesDto extends FieldPropertiesDto {
 
     public get isSortable() {
         return false;
-    }
-
-    constructor(editor: string,
-        props?: Partial<TagsFieldPropertiesDto>
-    ) {
-        super('Tags', props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {
@@ -400,6 +358,8 @@ export class TagsFieldPropertiesDto extends FieldPropertiesDto {
 
 export class UIFieldPropertiesDto extends FieldPropertiesDto {
     public readonly fieldType = 'UI';
+
+    public readonly editor = 'Separator';
 
     public get isComplexUI() {
         return false;
@@ -411,12 +371,6 @@ export class UIFieldPropertiesDto extends FieldPropertiesDto {
 
     public get isContentField() {
         return false;
-    }
-
-    constructor(
-        props?: Partial<TagsFieldPropertiesDto>
-    ) {
-        super('Separator', props);
     }
 
     public accept<T>(visitor: FieldPropertiesVisitor<T>): T {

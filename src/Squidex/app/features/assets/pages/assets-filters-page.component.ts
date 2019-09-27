@@ -10,6 +10,8 @@ import { Component } from '@angular/core';
 import {
     AssetsState,
     Queries,
+    Query,
+    SavedQuery,
     UIState
 } from '@app/shared';
 
@@ -19,7 +21,7 @@ import {
     templateUrl: './assets-filters-page.component.html'
 })
 export class AssetsFiltersPageComponent {
-    public queries = new Queries(this.uiState, 'assets');
+    public assetsQueries = new Queries(this.uiState, 'assets');
 
     constructor(
         public readonly assetsState: AssetsState,
@@ -27,7 +29,11 @@ export class AssetsFiltersPageComponent {
     ) {
     }
 
-    public search(query: string) {
+    public isQueryUsed = (query: SavedQuery) => {
+        return this.assetsState.isQueryUsed(query);
+    }
+
+    public search(query: Query) {
         this.assetsState.search(query);
     }
 
@@ -43,15 +49,7 @@ export class AssetsFiltersPageComponent {
         this.assetsState.resetTags();
     }
 
-    public isSelectedQuery(query: string) {
-        return query === this.assetsState.snapshot.assetsQuery || (!query && !this.assetsState.assetsQuery);
-    }
-
-    public trackByTag(index: number, tag: { name: string }) {
+    public trackByTag(tag: { name: string }) {
         return tag.name;
-    }
-
-    public trackByQuery(index: number, query: { name: string }) {
-        return query.name;
     }
 }

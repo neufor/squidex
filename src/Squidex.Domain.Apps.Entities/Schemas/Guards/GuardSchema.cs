@@ -7,11 +7,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Squidex.Domain.Apps.Core;
 using Squidex.Domain.Apps.Core.Schemas;
 using Squidex.Domain.Apps.Entities.Schemas.Commands;
 using Squidex.Infrastructure;
+using Squidex.Infrastructure.Validation;
 
 #pragma warning disable IDE0060 // Remove unused parameter
 
@@ -19,19 +19,15 @@ namespace Squidex.Domain.Apps.Entities.Schemas.Guards
 {
     public static class GuardSchema
     {
-        public static Task CanCreate(CreateSchema command, IAppProvider appProvider)
+        public static void CanCreate(CreateSchema command)
         {
             Guard.NotNull(command, nameof(command));
 
-            return Validate.It(() => "Cannot create schema.", async e =>
+            Validate.It(() => "Cannot create schema.", e =>
             {
                 if (!command.Name.IsSlug())
                 {
                     e(Not.ValidSlug("Name"), nameof(command.Name));
-                }
-                else if (await appProvider.GetSchemaAsync(command.AppId.Id, command.Name) != null)
-                {
-                    e("A schema with the same name already exists.");
                 }
 
                 ValidateUpsert(command, e);

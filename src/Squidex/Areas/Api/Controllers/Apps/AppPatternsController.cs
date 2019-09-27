@@ -49,7 +49,7 @@ namespace Squidex.Areas.Api.Controllers.Apps
         {
             var response = Deferred.Response(() =>
             {
-                return PatternsDto.FromApp(App, this);
+                return GetResponse(App);
             });
 
             Response.Headers[HeaderNames.ETag] = App.ToEtag();
@@ -69,7 +69,7 @@ namespace Squidex.Areas.Api.Controllers.Apps
         /// </returns>
         [HttpPost]
         [Route("apps/{app}/patterns/")]
-        [ProducesResponseType(typeof(PatternsDto), 200)]
+        [ProducesResponseType(typeof(PatternsDto), 201)]
         [ApiPermission(Permissions.AppPatternsCreate)]
         [ApiCosts(1)]
         public async Task<IActionResult> PostPattern(string app, [FromBody] UpdatePatternDto request)
@@ -137,9 +137,14 @@ namespace Squidex.Areas.Api.Controllers.Apps
             var context = await CommandBus.PublishAsync(command);
 
             var result = context.Result<IAppEntity>();
-            var response = PatternsDto.FromApp(result, this);
+            var response = GetResponse(result);
 
             return response;
+        }
+
+        private PatternsDto GetResponse(IAppEntity result)
+        {
+            return PatternsDto.FromApp(result, this);
         }
     }
 }
